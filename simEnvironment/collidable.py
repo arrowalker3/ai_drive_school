@@ -1,5 +1,8 @@
 from abc import ABC, abstractmethod
-from globalResources import Point
+from simEnvironment.globalResources import Point
+from simEnvironment.hurtbox import Circle, Rect
+from simEnvironment.image import Sprite, RectShape, TargetShape
+from simEnvironment.navigator import PlayerNav, Motionless, WarpWhenHit, WarpWhenHitTimed, CycleWhenHit
 
 ############################################
 ###############  COLLIDABLE  ###############
@@ -9,9 +12,9 @@ class Collidable(ABC):
         super().__init__()
         position = Point(0, 0)
         rotation = 0
-        hurtbox = None
-        nav = None
-        img = None
+        hurtbox = Rect()
+        nav = Motionless()
+        img = RectShape(0, 0)
 
     """
     ON COLLISION
@@ -51,8 +54,8 @@ class Collidable(ABC):
 class Vehicle(Collidable):
     def __init__(self) -> None:
         super().__init__()
-        self.hurtbox = None
-        self.nav = None
+        self.hurtbox = Rect()
+        self.nav = PlayerNav()
         self.alive = True
 
     """
@@ -68,10 +71,10 @@ class Vehicle(Collidable):
 ###############  TARGET  ###############
 ########################################
 class Target(Collidable):
-    def __init__(self) -> None:
+    def __init__(self, locations) -> None:
         super().__init__()
-        self.hurtbox = None
-        self.nav = None
+        self.hurtbox = Circle()
+        self.nav = WarpWhenHit(locations)
 
     """
     ON COLLISION

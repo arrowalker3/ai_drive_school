@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from globalResources import Point
+from simEnvironment.globalResources import Point
 
 ###########################################
 ###############  NAVIGATOR  ###############
@@ -76,9 +76,9 @@ class Motionless(Navigator):
 ###############  WARP WHEN HIT  ###############
 ###############################################
 class WarpWhenHit(Navigator):
-    def __init__(self) -> None:
+    def __init__(self, locations) -> None:
         super().__init__()
-        warpPointOptions = []
+        warpPointOptions = locations
         
     """
     MOVE
@@ -96,9 +96,9 @@ class WarpWhenHit(Navigator):
 ###############  WARP WHEN HIT TIMED  ###############
 #####################################################
 class WarpWhenHitTimed(WarpWhenHit):
-    def __init__(self) -> None:
+    def __init__(self, locations) -> None:
         super().__init__()
-        warpPointOptions = []
+        warpPointOptions = locations
         
     """
     MOVE
@@ -114,9 +114,9 @@ class WarpWhenHitTimed(WarpWhenHit):
 ###############  CYCLE WHEN HIT  ###############
 ################################################
 class CycleWhenHit(Navigator):
-    def __init__(self) -> None:
+    def __init__(self, locations) -> None:
         super().__init__()
-        targetPositions = []
+        targetPositions = locations
         currentIndex = 0
         
     """

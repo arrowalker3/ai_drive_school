@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 
+import pygame
+
 #######################################
 ###############  IMAGE  ###############
 #######################################
@@ -37,23 +39,26 @@ class Sprite(Image):
 ###############  RECT SHAPE  ###############
 ############################################
 class RectShape(Image):
-    def __init__(self) -> None:
+    def __init__(self, w, h) -> None:
         super().__init__()
+        self.w = w
+        self.h = h
     """
     DRAW
     Draws image to the window at position and rotation
     """
     def draw(self, position, rotation):
-        return None
+        pygame.draw.rect()
     
     
     
 ##############################################
 ###############  TARGET SHAPE  ###############
 ##############################################
-class RectShape(Image):
-    def __init__(self) -> None:
+class TargetShape(Image):
+    def __init__(self, radius) -> None:
         super().__init__()
+        self.radius = radius
     """
     DRAW
     Draws image to the window at position and rotation

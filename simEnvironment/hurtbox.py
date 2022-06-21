@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from globalResources import Point
+from simEnvironment.globalResources import Point
 
 
 #########################################
