@@ -1,7 +1,9 @@
 from simEnvironment.globalResources import Point, WIDTH_BOARD, HEIGHT_BOARD
 from simEnvironment.collidable import Vehicle, Target, Wall
+import pygame
 from copy import copy
 import json
+import os
 
 class MapManager:
     def __init__(self) -> None:
@@ -15,8 +17,9 @@ class MapManager:
         
         # Create Vehicle
         self.carStart = Point(mapInfoDict["vehicleStart"]["x"], mapInfoDict["vehicleStart"]["y"])
-        vehicle = Vehicle()
-        vehicle.position = copy(self.carStart)
+        image = pygame.image.load(os.path.join('simEnvironment', 'images', 'testCar.png'))
+        vehicle = Vehicle(image)
+        vehicle.rect.move_ip(self.carStart.x, self.carStart.y)
         
         # Create Target
         targetLocations = []
