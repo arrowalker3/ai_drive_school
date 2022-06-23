@@ -133,6 +133,8 @@ class Target(Collidable):
     """
     def onCollision(self):
         self.nav.needToMove = True
+        
+        return 1
     
     
     

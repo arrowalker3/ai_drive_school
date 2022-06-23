@@ -4,6 +4,7 @@ AI DRIVING SCHOOL
 
 from errno import ENOMSG
 import os
+import pygame
 from select import select
 
 from simEnvironment.game import Environment
@@ -28,10 +29,14 @@ def selectMapFile():
 def testEnvironment():
     # Select map
     env = Environment()
+    env.playerDriven = True
     
     # Create map
-    mapSuccess = env.createMap(f"maps/{selectMapFile()}")
+    mapSuccess = env.createMap(os.path.join('maps', selectMapFile()))
+    # mapSuccess = env.createMap(f'maps/{selectMapFile()}')
     if mapSuccess:
+        env.setupEnv()
+        
         # While continue, run environment
         gameOver = False
         while not gameOver:
@@ -42,12 +47,21 @@ def testEnvironment():
         
 def trainAI():
     print("Training AI option is still in development.")
+    # Select map
+    env = Environment()
+    
+    # Create map
+    mapSuccess = env.createMap(f"maps/{selectMapFile()}")
     # Set FPS
     # Request filename to save NN settings
         # STRETCH - If file selected from settings folder, load state into Network
     # Request map from list
     # Create map
-    # While continue:
+    if mapSuccess:
+        # While continue:
+        gameOver = False
+        while not gameOver:
+            reward, gameOver, score = env.playStep()
         # Get starting state
         # Get move
         # playStep using action
@@ -78,6 +92,7 @@ def runAI():
 def main():
     # Request mode selection
     active = True
+    # pygame.init()
     while active:
         # choice = modeSelection()
         choice = "1"

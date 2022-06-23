@@ -57,8 +57,12 @@ class PlayerNav(Navigator):
         if not self.speedChange:
             if self.speed > 0:
                 self.speed -= self.acceleration / 2
+                if self.speed < 0:
+                    self.speed = 0
             elif self.speed < 0:
                 self.speed += self.acceleration / 2
+                if self.speed > 0:
+                    self.speed = 0
                 
         self.speedChange = False
     
