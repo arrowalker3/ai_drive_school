@@ -36,13 +36,12 @@ class Environment:
         self.heldKeys = set()
         
         
-        self.restart()
-        
     def setupEnv(self):
         # init display
         self.display = pygame.display.set_mode((WIDTH_BOARD, HEIGHT_BOARD))
         pygame.display.set_caption('AI Driving School')
         self.clock = pygame.time.Clock()
+        self.restart()
             
     """
     RESTART
@@ -52,6 +51,8 @@ class Environment:
     def restart(self):
         self.frameCount = 0
         self.score = 0
+        
+        self.mapManager.moveToStartingLocations(self.vehicleGroup.sprite, self.targetGroup.sprite)
         
     """
     GET STATE
@@ -155,7 +156,7 @@ class Environment:
             action = self.getPlayerAction()
         else:
             self.frameCount += 1
-            if self.frameCount > (100 * self.score):
+            if self.frameCount > (100 * (self.score + 1)):
                 reward -= 10
                 gameOver = True
                 
@@ -177,7 +178,7 @@ class Environment:
         # Vehicle hit target
         targetCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.targetGroup, False, pygame.sprite.collide_mask)
         for target in targetCollisions:
-            score += target.onCollision()
+            self.score += target.onCollision()
             reward += 10
         
         return reward, gameOver, self.score
@@ -202,13 +203,14 @@ class Environment:
         # Check held keys
         for x in self.heldKeys:
             if x == pygame.K_UP:
-                action[0] = 1
+                action[0] = 1   # [1, 0, 0, -, -, -]
             elif x == pygame.K_DOWN:
-                action[1] = 1
+                action[1] = 1   # [0, 1, 0, -, -, -]
+                
             if x == pygame.K_LEFT:
-                action[3] = 1
+                action[3] = 1   # [-, -, -, 1, 0, 0]
             elif x == pygame.K_RIGHT:
-                action[4] = 1
+                action[4] = 1   # [-, -, -, 0, 1, 0]
         
         return action
     
@@ -228,7 +230,7 @@ class Environment:
         self.allSpritesList.draw(self.display)
         
         if self.playerDriven:
-            viewingData = self.getState(normalize=False)
+            viewingData = self.getState(normalize=True)
             index = 0
             
             for stat in viewingData:

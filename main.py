@@ -49,30 +49,58 @@ def trainAI():
     print("Training AI option is still in development.")
     # Select map
     env = Environment()
+    env.playerDriven = False
     
     # Create map
     mapSuccess = env.createMap(f"maps/{selectMapFile()}")
     # Set FPS
     # Request filename to save NN settings
         # STRETCH - If file selected from settings folder, load state into Network
-    # Request map from list
-    # Create map
     if mapSuccess:
+        # Prep work
+        env.setupEnv()
+        agent = Agent(len(env.getState()))
+        highScore = 0
+        
         # While continue:
-        gameOver = False
-        while not gameOver:
-            reward, gameOver, score = env.playStep()
-        # Get starting state
-        # Get move
-        # playStep using action
-        # get new state
-        # train short memory
-        # remember state information
-        # if game over:
-            # reset environment
-            # train long memory
-            # if new high score, save model
-            # print any output
+        train = True
+        while train:
+            # Get starting state
+            startingState = env.getState()
+            
+            # Get move
+            action = agent.getAction(startingState)
+            
+            # playStep using action
+            reward, gameOver, score = env.playStep(action)
+
+            # get new state
+            resultingState = env.getState()
+            
+            # train short memory
+            agent.trainShortMemory(startingState, action, reward, resultingState, gameOver)
+
+            # remember state information
+            agent.remember(startingState, action, reward, resultingState, gameOver)
+
+            if gameOver:
+                # reset environment
+                env.restart()
+                agent.numberOfGames += 1
+                
+                # train long memory
+                agent.trainLongMemory()
+                
+                # if new high score, save model
+                if score > highScore:
+                    highScore = score
+                    agent.model.save()
+                    
+                # print any output
+                print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}')
+                
+    else:
+        print(f"Something went wrong with trying to open the map file.")
             
 def runAI():
     print("Running AI option is still in development.")
@@ -95,7 +123,7 @@ def main():
     # pygame.init()
     while active:
         # choice = modeSelection()
-        choice = "1"
+        choice = "2"
         
         # If Test Environment (1)
         if choice == "1":
