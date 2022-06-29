@@ -50,6 +50,7 @@ def trainAI():
     # Select map
     env = Environment()
     env.playerDriven = False
+    env.maxFPS = 200
     
     # Create map
     mapSuccess = env.createMap(f"maps/{selectMapFile()}")

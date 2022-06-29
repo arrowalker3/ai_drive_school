@@ -142,10 +142,10 @@ class Target(Collidable):
 ###############  WALL  ###############
 ######################################
 class Wall(Collidable):
-    def __init__(self) -> None:
-        super().__init__()  # No changes needed from original values
-        self.width = 0
-        self.height = 0
+    def __init__(self, width, height) -> None:
+        super().__init__(width=width, height=height, color=pygame.Color('white'))  # No changes needed from original values
+        self.width = width
+        self.height = height
         
     """
     ON COLLISION
