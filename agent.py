@@ -24,6 +24,23 @@ class Agent:
         self.memory = deque(maxlen=MAX_MEMORY)
         self.model = LinearQNet(viewingDataLen, HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
         self.trainer = QTrainer(self.model, lr=LEARNING_RATE, gamma=self.gamma)
+        
+    def loadFromFile(self, filename="default.pth"):
+        loadedCheckpoint = self.model.load(filename)
+        agentData = loadedCheckpoint["agentData"]
+        
+        self.numberOfGames = agentData["epoch"]
+        self.trainer.optimizer.load_state_dict(agentData["optimState"])
+        
+        return loadedCheckpoint
+        
+    def saveToFile(self, filename="default.pth", checkpointInfo={}):
+        checkpointInfo["agentData"] = {
+            "epoch": self.numberOfGames,
+            "optimState": self.trainer.optimizer.state_dict()
+        }
+        
+        self.model.save(filename, checkpointInfo)
 
     """
     GET ENV STATE

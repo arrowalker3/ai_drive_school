@@ -31,14 +31,17 @@ class LinearQNet(nn.Module):
     SAVE
     Saves the Neural Network to be used later
     """
-    def save(self, fileName='default.pth'):
+    def save(self, fileName='default.pth', infoToSave={}):
+        # Add the model to the information we're saving
+        infoToSave["modelState"] = self.state_dict()
+        
         modelFolderPath = './settings'
         if not os.path.exists(modelFolderPath):
             os.makedirs(modelFolderPath)
             
         fileName = os.path.join(modelFolderPath, fileName)
         
-        torch.save(self.state_dict(), fileName)
+        torch.save(infoToSave, fileName)
     
     """
     LOAD
@@ -46,7 +49,19 @@ class LinearQNet(nn.Module):
     weights of Neural Network
     """
     def load(self, fileName):
-        return None
+        modelFolderPath = './settings'
+        
+        if not os.path.exists(modelFolderPath):
+            pass
+
+        fileName = os.path.join(modelFolderPath, fileName)
+        
+        loadedCheckpoint = torch.load(fileName)
+        
+        self.load_state_dict(loadedCheckpoint["modelState"])
+        self.eval()
+        
+        return loadedCheckpoint
     
     
     

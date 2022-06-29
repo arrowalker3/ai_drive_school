@@ -26,6 +26,9 @@ def selectMapFile():
     # STRETCH CHALLENGE: Provide multiple options of map files
     return "level1.json"
 
+def selectNetworkSettingsFile():
+    return "default.pth"
+
 def testEnvironment():
     # Select map
     env = Environment()
@@ -56,6 +59,8 @@ def trainAI():
     mapSuccess = env.createMap(f"maps/{selectMapFile()}")
     # Set FPS
     # Request filename to save NN settings
+    filename = selectNetworkSettingsFile()
+    
         # STRETCH - If file selected from settings folder, load state into Network
     if mapSuccess:
         # Prep work
@@ -95,7 +100,13 @@ def trainAI():
                 # if new high score, save model
                 if score > highScore:
                     highScore = score
-                    agent.model.save()
+                saveData = {
+                    "highScore": highScore
+                }
+                try:
+                    agent.saveToFile(filename, saveData)
+                except Exception as e:
+                    print(e, "\n\n Missed a save")
                     
                 # print any output
                 print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}')
@@ -105,16 +116,46 @@ def trainAI():
             
 def runAI():
     print("Running AI option is still in development.")
-    # Select NN settings filename from list
-        # If no list, return to mode selection
-        # Load settings into Model
+    env = Environment()
+    env.playerDriven = False
+    
+    # Select NN settings filename
+    pthFilename = selectNetworkSettingsFile()
+    while not os.path.exists(os.path.join('./settings', pthFilename)):
+        print("File doesn't exist")
+        pthFilename = selectNetworkSettingsFile()
+    
     # Select map file from list
-    # Create map
-    # while continue:
-        # get starting state
-        # get move
-        # playStep using action
-        # if game over, reset environment and print any output
+    mapSuccess = env.createMap(f"maps/{selectMapFile()}")
+        
+    if mapSuccess:
+        # Prep work
+        env.setupEnv()
+        agent = Agent(len(env.getState()))
+        saveData = agent.loadFromFile(pthFilename)
+        highScore = saveData["highScore"]
+        
+        # While continue:
+        run = True
+        while run:
+            # Get starting state
+            startingState = env.getState()
+            
+            # Get move
+            action = agent.getAction(startingState)
+            
+            # playStep using action
+            reward, gameOver, score = env.playStep(action)
+
+            if gameOver:
+                # reset environment
+                env.restart()
+                    
+                # print any output
+                print(f'Game over! {score} points. Record from training: {highScore}')
+                
+    else:
+        print(f"Something went wrong with trying to open the map file.")
             
             
 
@@ -124,7 +165,7 @@ def main():
     # pygame.init()
     while active:
         # choice = modeSelection()
-        choice = "2"
+        choice = "3"
         
         # If Test Environment (1)
         if choice == "1":
