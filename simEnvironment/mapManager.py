@@ -1,5 +1,6 @@
 from simEnvironment.globalResources import Point, WIDTH_BOARD, HEIGHT_BOARD
 from simEnvironment.collidable import Vehicle, Target, Wall
+from simEnvironment.navigator import Navigator, PlayerNav, Motionless, WarpWhenHit, WarpWhenHitTimed, CycleWhenHit
 import pygame
 from copy import copy
 import json
@@ -53,11 +54,22 @@ class MapManager:
         for position in mapInfoDict["targetLocations"]:
             targetLocations.append(Point(position["x"], position["y"]))
             
-        target = Target(targetLocations)
+        navType = mapInfoDict["targetNavType"]
+        if navType == "cycle":
+            navigator = CycleWhenHit(targetLocations)
+        else:       # navType = "default"
+            navigator = WarpWhenHit(targetLocations)
+            
+        target = Target(navigator)
         self.targetStart = targetLocations[0]
         
         # Collect wall positions and dimensions
         walls = []
+        for wall in mapInfoDict["walls"]:
+            newWall = Wall(wall["width"], wall["height"],
+                           wall["x"], wall["y"])
+            
+            walls.append(newWall)
         
         # Move to starting locations
         self.moveToStartingLocations(vehicle, target)
@@ -65,10 +77,9 @@ class MapManager:
         return vehicle, target, walls
     
     def moveToStartingLocations(self, vehicle: pygame.sprite.Sprite, target: pygame.sprite.Sprite):
-        vehicle.rect.x = self.carStart.x
-        vehicle.rect.y = self.carStart.y
-        vehicle.nav = PlayerNav()
+        vehicle.reset(self.carStart.x, self.carStart.y)
         
-        target.rect.x = self.targetStart.x
-        target.rect.y = self.targetStart.y
+        target.restart()
+        # target.rect.x = self.targetStart.x
+        # target.rect.y = self.targetStart.y
         

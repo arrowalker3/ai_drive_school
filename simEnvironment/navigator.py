@@ -35,7 +35,7 @@ class PlayerNav(Navigator):
         self.vehicleAngle = 0
         self.turnSpeed = 10
         self.acceleration = 0.75
-        self.maxSpeed = 20
+        self.maxSpeed = 15
         self.speedChange = False
         
     """
@@ -56,11 +56,11 @@ class PlayerNav(Navigator):
         # Only apply if there hasn't been any acceleration
         if not self.speedChange:
             if self.speed > 0:
-                self.speed -= self.acceleration / 2
+                self.speed -= self.acceleration / 1.5
                 if self.speed < 0:
                     self.speed = 0
             elif self.speed < 0:
-                self.speed += self.acceleration / 2
+                self.speed += self.acceleration / 1.5
                 if self.speed > 0:
                     self.speed = 0
                 
@@ -84,10 +84,16 @@ class PlayerNav(Navigator):
         self.speed = self.speed + (self.acceleration * direction)
         if self.speed > self.maxSpeed:
             self.speed = self.maxSpeed
-        elif self.speed < -self.maxSpeed:
-            self.speed = -self.maxSpeed
+        elif self.speed < (-self.maxSpeed / 2):
+            self.speed = -self.maxSpeed / 2
             
         self.speedChange = True
+        
+    def restart(self):
+        self.speed = 0
+        self.vehicleAngle = 0
+        self.tireAngle = 0
+        self.speedChange = False
 
     
     
@@ -115,7 +121,7 @@ class Motionless(Navigator):
 class WarpWhenHit(Navigator):
     def __init__(self, locations) -> None:
         super().__init__()
-        self.warpPointOptions = locations
+        self.targetPositions = locations
         self.needToMove = False
         
     """
@@ -123,16 +129,21 @@ class WarpWhenHit(Navigator):
     Chooses a warp point from among the internal list of options
     that is different than the position given
     """
-    def move(self, rect):
+    def move(self, rect, randomize=True):
         if self.needToMove:
-            newSpot = Point(rect.x, rect.y)
-            while newSpot.x == rect.x and newSpot.y == rect.y:
-                newSpot = self.warpPointOptions[random.randint(0, len(self.warpPointOptions)-1)]
+            newSpot = self.targetPositions[random.randint(0, len(self.targetPositions)-1)]
+            if randomize:
+                while newSpot.x == rect.x and newSpot.y == rect.y:
+                    newSpot = self.targetPositions[random.randint(0, len(self.targetPositions)-1)]
             
             rect.x = newSpot.x
             rect.y = newSpot.y
 
             self.needToMove = False
+    
+    def restart(self, rect):
+        self.needToMove = True
+        self.move(rect, False)
     
     
     
@@ -142,7 +153,7 @@ class WarpWhenHit(Navigator):
 class WarpWhenHitTimed(WarpWhenHit):
     def __init__(self, locations) -> None:
         super().__init__()
-        self.warpPointOptions = locations
+        self.targetPositions = locations
         
     """
     MOVE
@@ -157,10 +168,9 @@ class WarpWhenHitTimed(WarpWhenHit):
 ################################################
 ###############  CYCLE WHEN HIT  ###############
 ################################################
-class CycleWhenHit(Navigator):
+class CycleWhenHit(WarpWhenHit):
     def __init__(self, locations) -> None:
-        super().__init__()
-        self.targetPositions = locations
+        super().__init__(locations)
         self.currentIndex = 0
         
     """
@@ -169,4 +179,14 @@ class CycleWhenHit(Navigator):
     restarting at 0 when the end of the list is reached.
     """
     def move(self, rect):
-        pass
+        if self.needToMove:
+            self.currentIndex = (self.currentIndex + 1) % len(self.targetPositions)
+            rect.x = self.targetPositions[self.currentIndex].x
+            rect.y = self.targetPositions[self.currentIndex].y
+        
+        self.needToMove = False
+        
+    def restart(self, rect):
+        self.currentIndex = len(self.targetPositions)-1
+        self.needToMove = True
+        self.move(rect)

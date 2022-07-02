@@ -4,13 +4,14 @@ import numpy as np
 from collections import deque
 from model import LinearQNet, QTrainer
 
-MAX_MEMORY = 100_000        # We can remember at most this many moves and their results
+MAX_MEMORY = 500_000        # We can remember at most this many moves and their results
 BATCH_SIZE = 1000           # How many moves do we train from at a time (at max)?
 LEARNING_RATE = 0.001       # How much do we adjust our strategy based on results?
-RANDOM_CHANCE = 80          # How many games do we include random moves for exploring new options?
-RANDOMNESS_DECIDER = 300
+RANDOM_CHANCE = 150          # How many games do we include random moves for exploring new options?
+RANDOMNESS_DECIDER = 400
 HIDDEN_LAYER_SIZE = 256
 OUTPUT_SIZE = 6
+
 
 
 #######################################
@@ -19,6 +20,7 @@ OUTPUT_SIZE = 6
 class Agent:
     def __init__(self, viewingDataLen) -> None:
         self.numberOfGames = 0
+        self.last50Games = deque(maxlen=50)
         self.epsilon = 0        # Controls randomness
         self.gamma = 0.9          # For model
         self.memory = deque(maxlen=MAX_MEMORY)
@@ -107,3 +109,6 @@ class Agent:
         finalMove[turnMove] = 1
         
         return finalMove
+    
+    # def getEpsilon(self):
+        

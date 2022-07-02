@@ -6,5 +6,6 @@
         { "x": 55, "y": 425 },
         { "x": 605, "y": 425 }
     ],
+    "targetNavType": "default",
     "walls": []
 }

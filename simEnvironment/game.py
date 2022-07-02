@@ -6,14 +6,21 @@ from simEnvironment.collidable import Collidable
 from simEnvironment.mapManager import MapManager
 
 # Choosing what goes into Viewing Data
-VEHICLE_SPEED_INCLUDED = True
-VEHICLE_ANGLE_INCLUDED = True
-TARGET_DIRECTION_INCLUDED = True
-TARGET_DISTANCE_INCLUDED = True
-FORWARD_DANGER_DISTANCE_INCLUDED = True
-BACKWARD_DANGER_DISTANCE_INCLUDED = True
-RIGHT_DANGER_DISTANCE_INCLUDED = True
-LEFT_DANGER_DISTANCE_INCLUDED = True
+commands = set()
+commands.add('vehicle speed')
+# commands.add('vehicle angle')
+commands.add('target direction')
+commands.add('target distance')
+commands.add('forward danger distance')
+commands.add('backward danger distance')
+# commands.add('right danger distance')
+# commands.add('left danger distance')
+# commands.add('position')
+# commands.add('center x y')
+
+# binary commands
+commands.add('')
+
 
 pygame.init()
 font = pygame.font.Font(os.path.join('simEnvironment', 'arial.ttf'), 16)
@@ -70,7 +77,7 @@ class Environment:
         vehicleCenter = self.vehicleGroup.sprite.rect.center
         maxDistance = math.sqrt(WIDTH_BOARD**2 + HEIGHT_BOARD**2)
         
-        if VEHICLE_SPEED_INCLUDED:
+        if 'vehicle speed' in commands:
             # Get Speed
             speed = self.vehicleGroup.sprite.nav.speed
 
@@ -82,7 +89,7 @@ class Environment:
             viewingData.append(speed)
             self.stateLabels.append('Speed:')
         
-        if VEHICLE_ANGLE_INCLUDED:
+        if 'vehicle angle' in commands:
             # Get Angle
             vehicleAngle = self.vehicleGroup.sprite.nav.vehicleAngle
             
@@ -94,7 +101,7 @@ class Environment:
             viewingData.append(vehicleAngle)
             self.stateLabels.append('V_Angle:')
         
-        if TARGET_DIRECTION_INCLUDED:
+        if 'target direction' in commands:
             # Get Direction relative to vehicle angle
             targetDirection = self.getAngleFromPoints()
 
@@ -107,7 +114,7 @@ class Environment:
             viewingData.append(targetDirection)
             self.stateLabels.append('T_Direction:')
         
-        if TARGET_DISTANCE_INCLUDED:
+        if 'target distance' in commands:
             # Get Distance
             targetPosition = self.targetGroup.sprite.rect.center
             targetDistance = math.sqrt((targetPosition[0] - vehicleCenter[0])**2 + (targetPosition[1] - vehicleCenter[1])**2)
@@ -121,7 +128,7 @@ class Environment:
             viewingData.append(targetDistance)
             self.stateLabels.append('T_Distance:')
             
-        if FORWARD_DANGER_DISTANCE_INCLUDED:
+        if 'forward danger distance' in commands:
             # Get Distance
             distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
                                                         self.vehicleGroup.sprite.nav.vehicleAngle, 0)
@@ -134,7 +141,7 @@ class Environment:
             viewingData.append(distance)
             self.stateLabels.append('F_Danger:')
             
-        if BACKWARD_DANGER_DISTANCE_INCLUDED:
+        if 'backward danger distance' in commands:
             # Get Distance
             distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
                                                         self.vehicleGroup.sprite.nav.vehicleAngle, 180)
@@ -147,7 +154,7 @@ class Environment:
             viewingData.append(distance)
             self.stateLabels.append('B_Danger:')
             
-        if RIGHT_DANGER_DISTANCE_INCLUDED:
+        if 'right danger distance' in commands:
             # Get Distance
             distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
                                                         self.vehicleGroup.sprite.nav.vehicleAngle, 270)
@@ -160,7 +167,7 @@ class Environment:
             viewingData.append(distance)
             self.stateLabels.append('R_Danger:')
             
-        if LEFT_DANGER_DISTANCE_INCLUDED:
+        if 'left danger distance' in commands:
             # Get Distance
             distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
                                                         self.vehicleGroup.sprite.nav.vehicleAngle, 90)
@@ -172,6 +179,32 @@ class Environment:
             # Add to data
             viewingData.append(distance)
             self.stateLabels.append('L_Danger:')
+            
+        if 'position' in commands:
+            x = self.vehicleGroup.sprite.rect.left
+            y = self.vehicleGroup.sprite.rect.top
+            
+            if normalize:
+                x /= WIDTH_BOARD
+                y /= HEIGHT_BOARD
+                
+            viewingData.append(x)
+            viewingData.append(y)
+            self.stateLabels.append('X:')
+            self.stateLabels.append('Y:')
+            
+        if 'center x y' in commands:
+            x = vehicleCenter[0]
+            y = vehicleCenter[1]
+            
+            if normalize:
+                x /= WIDTH_BOARD
+                y /= HEIGHT_BOARD
+                
+            viewingData.append(x)
+            viewingData.append(y)
+            self.stateLabels.append('X_C:')
+            self.stateLabels.append('Y_C:')
             
             
         return viewingData
@@ -212,14 +245,13 @@ class Environment:
         reward = 0
         gameOver = False
         # self.score = 0
-        startDistance = self.vehicleToTarget
         
         # If playerDriven, get action
         if self.playerDriven:
             action = self.getPlayerAction()
         else:
             self.frameCount += 1
-            if self.frameCount > (100 * (self.score + 1)):
+            if self.frameCount > (1000 * (self.score + 1)):
                 reward = -10
                 gameOver = True
                 
@@ -241,23 +273,24 @@ class Environment:
         wallCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.wallsList, False, pygame.sprite.collide_mask)
         if len(wallCollisions) > 0:
             # self.score += target.onCollision()
-            reward = -10
+            reward = -100
             gameOver = True
 
             return reward, gameOver, self.score
         
         endDistance = self.distanceToTarget()
-        if endDistance < startDistance:
-            reward += 0.1
+        forwardProgress = self.vehicleToTarget - endDistance
+        if forwardProgress > 0:
+            reward = 5 * forwardProgress
             self.vehicleToTarget = endDistance
-        else:
-            reward -= 0.1
+        # else:
+        #     reward = forwardProgress - 1
         
         # Vehicle hit target
         targetCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.targetGroup, False, pygame.sprite.collide_mask)
         for target in targetCollisions:
             self.score += target.onCollision()
-            reward += 10
+            reward += 1000
             self.vehicleToTarget = self.distanceToTarget()
         
         return reward, gameOver, self.score
@@ -280,16 +313,16 @@ class Environment:
                     self.heldKeys.remove(event.key)
                 
         # Check held keys
-        for x in self.heldKeys:
-            if x == pygame.K_UP:
-                action[0] = 1   # [1, 0, 0, -, -, -]
-            elif x == pygame.K_DOWN:
-                action[1] = 1   # [0, 1, 0, -, -, -]
-                
-            if x == pygame.K_LEFT:
-                action[3] = 1   # [-, -, -, 1, 0, 0]
-            elif x == pygame.K_RIGHT:
-                action[4] = 1   # [-, -, -, 0, 1, 0]
+        heldKeys = pygame.key.get_pressed()
+        if heldKeys[pygame.K_UP]:
+            action[0] = 1   # [1, 0, 0, -, -, -]
+        elif heldKeys[pygame.K_DOWN]:
+            action[1] = 1   # [0, 1, 0, -, -, -]
+            
+        if heldKeys[pygame.K_LEFT]:
+            action[3] = 1   # [-, -, -, 1, 0, 0]
+        elif heldKeys[pygame.K_RIGHT]:
+            action[4] = 1   # [-, -, -, 0, 1, 0]
         
         return action
     

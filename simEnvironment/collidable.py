@@ -115,6 +115,14 @@ class Vehicle(pygame.sprite.Sprite):
         
         # Rotate the mask for accurate collisions
         self.mask = pygame.mask.from_surface(self.image)
+        
+    def reset(self, startX, startY):
+        self.nav.restart()
+        self.rotateImage()
+        
+        self.rect.x = startX
+        self.rect.y = startY
+
     
 
 
@@ -122,10 +130,10 @@ class Vehicle(pygame.sprite.Sprite):
 ###############  TARGET  ###############
 ########################################
 class Target(Collidable):
-    def __init__(self, locations) -> None:
+    def __init__(self, navigator) -> None:
         super().__init__(width=60, height=60, color=pygame.Color('yellow'))
         # self.hurtbox = Circle()
-        self.nav = WarpWhenHit(locations)
+        self.nav = navigator
 
     """
     ON COLLISION
@@ -136,16 +144,21 @@ class Target(Collidable):
         
         return 1
     
+    def restart(self):
+        self.nav.restart(self.rect)
+    
     
     
 ######################################
 ###############  WALL  ###############
 ######################################
 class Wall(Collidable):
-    def __init__(self, width, height) -> None:
-        super().__init__(width=width, height=height, color=pygame.Color('white'))  # No changes needed from original values
+    def __init__(self, width, height, x=0, y=0) -> None:
+        super().__init__(width=width, height=height, color=pygame.Color('blue'))  # No changes needed from original values
         self.width = width
         self.height = height
+        self.rect.x = x
+        self.rect.y = y
         
     """
     ON COLLISION

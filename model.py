@@ -11,8 +11,9 @@ class LinearQNet(nn.Module):
     def __init__(self, inputSize, hiddenSize, outputSize) -> None:
         super().__init__()
         # Driving decision layers
-        self.driveLayer1 = nn.Linear(inputSize, hiddenSize)
-        self.driveLayer2 = nn.Linear(hiddenSize, outputSize)
+        self.linear1 = nn.Linear(inputSize, hiddenSize)
+        self.linear2 = nn.Linear(hiddenSize, hiddenSize)
+        self.linear3 = nn.Linear(hiddenSize, outputSize)
         self.outputGroups = outputSize // 3     # Each output has 3 possible options
         
     """
@@ -22,8 +23,9 @@ class LinearQNet(nn.Module):
     """
     def forward(self, x):
         # Driving prediction
-        drivePrediction = F.relu(self.driveLayer1(x))
-        drivePrediction = self.driveLayer2(drivePrediction)
+        drivePrediction = F.leaky_relu(self.linear1(x))
+        drivePrediction = F.leaky_relu(self.linear2(drivePrediction))
+        drivePrediction = self.linear3(drivePrediction)
         
         return drivePrediction
     
@@ -105,17 +107,24 @@ class QTrainer:
         # For every move in memory that we're given...
         for idx in range(len(gameOver)):
             # What is the reward resulting from the predicted move?
-            Q_new = reward[idx]
+            Q_new_drive = reward[idx]
+            Q_new_turn = reward[idx]
             
             # If the next move didn't cause a game over, ...
             if not gameOver[idx]:
                 # What would the reward be with the current model? Will the next state we move to after be beneficial?
-                Q_new = reward[idx] + self.gamma * torch.max(self.model(nextState[idx]))
+                nextStateResults = self.model(nextState[idx])
+                Q_new_drive = reward[idx] + self.gamma * torch.max(nextStateResults[0:3])
+                Q_new_turn = reward[idx] + self.gamma * torch.max(nextStateResults[3:6])
                 # "gamma" above determines how much a single example affects the neural network
                 
             # Whatever the result of the chosen action was, we want the neural net to be able to predict those results
-            for groupOffset in range(self.model.outputGroups):
-                target[idx][torch.argmax(action[idx]).item() + (3*groupOffset)] = Q_new
+            # for groupOffset in range(self.model.outputGroups):
+            currAction = action[idx]
+            driveAction = currAction[0:3]
+            turnAction = currAction[3:6]
+            target[idx][torch.argmax(driveAction).item()] = Q_new_drive
+            target[idx][torch.argmax(turnAction).item() + 3] = Q_new_turn
         
         # Zero out weights from training
         self.optimizer.zero_grad()

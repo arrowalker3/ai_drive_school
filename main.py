@@ -24,7 +24,7 @@ def modeSelection():
 
 def selectMapFile():
     # STRETCH CHALLENGE: Provide multiple options of map files
-    return "level1.json"
+    return "level2.json"
 
 def selectNetworkSettingsFile():
     return "default.pth"
@@ -45,6 +45,10 @@ def testEnvironment():
         while not gameOver:
             reward, gameOver, score = env.playStep()
             # If game over, ask if reset environment to above step (within game)
+            if gameOver:
+                print("Restarting...")
+                env.restart()
+                gameOver = False
     else:
         print(f"Something went wrong with trying to open the map file.")
         
@@ -67,6 +71,9 @@ def trainAI():
         env.setupEnv()
         agent = Agent(len(env.getState()))
         highScore = 0
+        lowestReward = 0
+        highestReward = 0
+        currReward = 0
         
         # While continue:
         train = True
@@ -79,6 +86,7 @@ def trainAI():
             
             # playStep using action
             reward, gameOver, score = env.playStep(action)
+            currReward += reward
 
             # get new state
             resultingState = env.getState()
@@ -100,16 +108,22 @@ def trainAI():
                 # if new high score, save model
                 if score > highScore:
                     highScore = score
-                saveData = {
-                    "highScore": highScore
-                }
-                try:
-                    agent.saveToFile(filename, saveData)
-                except Exception as e:
-                    print(e, "\n\n Missed a save")
+                    saveData = {
+                        "highScore": highScore
+                    }
+                    try:
+                        agent.saveToFile(filename, saveData)
+                    except Exception as e:
+                        print(e, "\n\n Missed a save")
+                        
+                if currReward < lowestReward:
+                    lowestReward = currReward
+                elif currReward > highestReward:
+                    highestReward = currReward
                     
                 # print any output
-                print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}')
+                print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}. Low reward: {lowestReward:.2f}. High reward: {highestReward:.2f}. Curr: {currReward:.2f}')
+                currReward = 0
                 
     else:
         print(f"Something went wrong with trying to open the map file.")
