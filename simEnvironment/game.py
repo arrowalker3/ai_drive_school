@@ -8,13 +8,15 @@ from simEnvironment.mapManager import MapManager
 # Choosing what goes into Viewing Data
 commands = set()
 commands.add('vehicle speed')
-# commands.add('vehicle angle')
+commands.add('vehicle angle')
 commands.add('target direction')
 commands.add('target distance')
 commands.add('forward danger distance')
 commands.add('backward danger distance')
-# commands.add('right danger distance')
-# commands.add('left danger distance')
+commands.add('right danger distance')
+commands.add('left danger distance')
+# commands.add('left-forward danger distance')
+# commands.add('right-forward danger distance')
 # commands.add('position')
 # commands.add('center x y')
 
@@ -180,6 +182,32 @@ class Environment:
             viewingData.append(distance)
             self.stateLabels.append('L_Danger:')
             
+        if 'left-forward danger distance' in commands:
+            # Get Distance
+            distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
+                                                        self.vehicleGroup.sprite.nav.vehicleAngle, 45)
+            
+            # Normalize
+            if normalize:
+                distance /= maxDistance
+                
+            # Add to data
+            viewingData.append(distance)
+            self.stateLabels.append('LF_Danger:')
+            
+        if 'right-forward danger distance' in commands:
+            # Get Distance
+            distance = self.shortestDistanceInDirection(vehicleCenter[0], vehicleCenter[1],
+                                                        self.vehicleGroup.sprite.nav.vehicleAngle, -45)
+            
+            # Normalize
+            if normalize:
+                distance /= maxDistance
+                
+            # Add to data
+            viewingData.append(distance)
+            self.stateLabels.append('LF_Danger:')
+            
         if 'position' in commands:
             x = self.vehicleGroup.sprite.rect.left
             y = self.vehicleGroup.sprite.rect.top
@@ -273,7 +301,7 @@ class Environment:
         wallCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.wallsList, False, pygame.sprite.collide_mask)
         if len(wallCollisions) > 0:
             # self.score += target.onCollision()
-            reward = -100
+            reward = -100 * self.vehicleGroup.sprite.nav.speed
             gameOver = True
 
             return reward, gameOver, self.score

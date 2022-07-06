@@ -10,6 +10,8 @@ from select import select
 from simEnvironment.game import Environment
 from model import LinearQNet, QTrainer
 from agent import Agent
+from collections import deque
+
 
 def modeSelection():
     print("""AI DRIVING SCHOOL
@@ -24,7 +26,7 @@ def modeSelection():
 
 def selectMapFile():
     # STRETCH CHALLENGE: Provide multiple options of map files
-    return "level2.json"
+    return "level1.json"
 
 def selectNetworkSettingsFile():
     return "default.pth"
@@ -74,6 +76,9 @@ def trainAI():
         lowestReward = 0
         highestReward = 0
         currReward = 0
+        REWARD_MEMORY_LENGTH = 100
+        rewardMemory = deque(maxlen=REWARD_MEMORY_LENGTH)
+        
         
         # While continue:
         train = True
@@ -120,6 +125,10 @@ def trainAI():
                     lowestReward = currReward
                 elif currReward > highestReward:
                     highestReward = currReward
+                    
+                # Save reward and update epsilon in agent
+                rewardMemory.append(score)
+                agent.adjustEpsilon(list(rewardMemory)[:REWARD_MEMORY_LENGTH//2], list(rewardMemory)[REWARD_MEMORY_LENGTH//2:])
                     
                 # print any output
                 print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}. Low reward: {lowestReward:.2f}. High reward: {highestReward:.2f}. Curr: {currReward:.2f}')
@@ -179,7 +188,7 @@ def main():
     # pygame.init()
     while active:
         # choice = modeSelection()
-        choice = "3"
+        choice = "2"
         
         # If Test Environment (1)
         if choice == "1":

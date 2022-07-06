@@ -3,12 +3,12 @@ import random
 import numpy as np
 from collections import deque
 from model import LinearQNet, QTrainer
+from statistics import mean
 
 MAX_MEMORY = 500_000        # We can remember at most this many moves and their results
-BATCH_SIZE = 1000           # How many moves do we train from at a time (at max)?
-LEARNING_RATE = 0.001       # How much do we adjust our strategy based on results?
-RANDOM_CHANCE = 150          # How many games do we include random moves for exploring new options?
-RANDOMNESS_DECIDER = 400
+BATCH_SIZE = 2000           # How many moves do we train from at a time (at max)?
+LEARNING_RATE = 0.003       # How much do we adjust our strategy based on results?
+EPSILON_CAP = 0.5
 HIDDEN_LAYER_SIZE = 256
 OUTPUT_SIZE = 6
 
@@ -21,17 +21,31 @@ class Agent:
     def __init__(self, viewingDataLen) -> None:
         self.numberOfGames = 0
         self.last50Games = deque(maxlen=50)
-        self.epsilon = 0        # Controls randomness
-        self.gamma = 0.9          # For model
+        self._epsilon = EPSILON_CAP        # Controls randomness
+        self.gamma = 0.9          # For trainer
         self.memory = deque(maxlen=MAX_MEMORY)
         self.model = LinearQNet(viewingDataLen, HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
         self.trainer = QTrainer(self.model, lr=LEARNING_RATE, gamma=self.gamma)
+        
+    
+    @property
+    def epsilon(self):
+        return self._epsilon
+    
+    @epsilon.setter
+    def epsilon(self, x):
+        self._epsilon = x
+        if self._epsilon > EPSILON_CAP:
+            self._epsilon = EPSILON_CAP
+        elif self._epsilon < 0:
+            self._epsilon = 0
         
     def loadFromFile(self, filename="default.pth"):
         loadedCheckpoint = self.model.load(filename)
         agentData = loadedCheckpoint["agentData"]
         
         self.numberOfGames = agentData["epoch"]
+        self._epsilon = agentData["epsilon"]
         self.trainer.optimizer.load_state_dict(agentData["optimState"])
         
         return loadedCheckpoint
@@ -39,7 +53,8 @@ class Agent:
     def saveToFile(self, filename="default.pth", checkpointInfo={}):
         checkpointInfo["agentData"] = {
             "epoch": self.numberOfGames,
-            "optimState": self.trainer.optimizer.state_dict()
+            "optimState": self.trainer.optimizer.state_dict(),
+            "epsilon": self._epsilon
         }
         
         self.model.save(filename, checkpointInfo)
@@ -88,10 +103,10 @@ class Agent:
     """
     def getAction(self, state):
         finalMove = [0, 0, 0, 0, 0, 0]
-        self.epsilon = RANDOM_CHANCE - self.numberOfGames
+        # self.epsilon = RANDOM_CHANCE - self.numberOfGames
         
         # Random move (exploration)
-        if random.randint(0, RANDOMNESS_DECIDER) < self.epsilon:
+        if random.random() < self.epsilon:
             driveMove = random.randint(0, 2)
             turnMove = random.randint(3, 5)
             
@@ -110,5 +125,16 @@ class Agent:
         
         return finalMove
     
-    # def getEpsilon(self):
+    def adjustEpsilon(self, oldRewards, recentRewards):
+        # Get average of old rewards
+        oldAverage = mean(oldRewards) if len(oldRewards) > 0 else 0
+        # Get average of recent rewards
+        recentAverage = mean(recentRewards) if len(recentRewards) > 0 else 0
+        
+        if recentAverage > oldAverage:  # Doing well, lower epsilon
+            self.epsilon -= 0.025
+            if self.epsilon < 0:
+                self.epsilon = 0
+        else:                           # Doing worse, raise epsilon
+            self.epsilon += 0.025
         

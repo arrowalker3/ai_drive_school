@@ -14,7 +14,6 @@ class LinearQNet(nn.Module):
         self.linear1 = nn.Linear(inputSize, hiddenSize)
         self.linear2 = nn.Linear(hiddenSize, hiddenSize)
         self.linear3 = nn.Linear(hiddenSize, outputSize)
-        self.outputGroups = outputSize // 3     # Each output has 3 possible options
         
     """
     FORWARD
@@ -119,7 +118,6 @@ class QTrainer:
                 # "gamma" above determines how much a single example affects the neural network
                 
             # Whatever the result of the chosen action was, we want the neural net to be able to predict those results
-            # for groupOffset in range(self.model.outputGroups):
             currAction = action[idx]
             driveAction = currAction[0:3]
             turnAction = currAction[3:6]
