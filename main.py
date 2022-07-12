@@ -201,7 +201,7 @@ def main():
     # pygame.init()
     while active:
         # choice = modeSelection()
-        choice = "2"
+        choice = "3"
         
         # If Test Environment (1)
         if choice == "1":
