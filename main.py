@@ -26,7 +26,7 @@ def modeSelection():
 
 def selectMapFile():
     # STRETCH CHALLENGE: Provide multiple options of map files
-    return "level1.json"
+    return "level3.json"
 
 def selectNetworkSettingsFile():
     return "default.pth"
@@ -95,20 +95,17 @@ def trainAI():
 
             # get new state
             resultingState = env.getState()
-            
-            # train short memory
-            agent.trainShortMemory(startingState, action, reward, resultingState, gameOver)
 
             # remember state information
             agent.remember(startingState, action, reward, resultingState, gameOver)
+            
+            # train short memory
+            # agent.trainShortMemory(startingState, action, reward, resultingState, gameOver)
 
             if gameOver:
                 # reset environment
                 env.restart()
                 agent.numberOfGames += 1
-                
-                # train long memory
-                agent.trainLongMemory()
                 
                 # if new high score, save model
                 if score > highScore:
@@ -120,6 +117,9 @@ def trainAI():
                         agent.saveToFile(filename, saveData)
                     except Exception as e:
                         print(e, "\n\n Missed a save")
+                
+                # train long memory
+                agent.trainLongMemory()
                         
                 if currReward < lowestReward:
                     lowestReward = currReward
@@ -133,6 +133,19 @@ def trainAI():
                 # print any output
                 print(f'Simulation {agent.numberOfGames}, {score} points. Record: {highScore}. Low reward: {lowestReward:.2f}. High reward: {highestReward:.2f}. Curr: {currReward:.2f}')
                 currReward = 0
+
+            else:   # gameOver == False
+                # If it is doing so well that it doesn't actually die, this still saves the AI
+                if score > highScore+100:   # Only if it does extremely better than previous attempts
+                    highScore = score
+                    saveData = {
+                        "highScore": highScore
+                    }
+                    try:
+                        agent.saveToFile(filename, saveData)
+                    except Exception as e:
+                        print(e, "\n\n Missed a save")
+                    
                 
     else:
         print(f"Something went wrong with trying to open the map file.")

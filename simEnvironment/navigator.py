@@ -21,6 +21,9 @@ class Navigator(ABC):
     def move(self, rect):
         pass
     
+    def collided(self):
+        pass
+    
     
     
 ############################################
@@ -35,7 +38,7 @@ class PlayerNav(Navigator):
         self.vehicleAngle = 0
         self.turnSpeed = 10
         self.acceleration = 0.75
-        self.maxSpeed = 15
+        self.maxSpeed = 10
         self.speedChange = False
         
     """
@@ -84,8 +87,8 @@ class PlayerNav(Navigator):
         self.speed = self.speed + (self.acceleration * direction)
         if self.speed > self.maxSpeed:
             self.speed = self.maxSpeed
-        elif self.speed < (-self.maxSpeed / 2):
-            self.speed = -self.maxSpeed / 2
+        elif self.speed < -self.maxSpeed:
+            self.speed = -self.maxSpeed
             
         self.speedChange = True
         
@@ -140,6 +143,9 @@ class WarpWhenHit(Navigator):
             rect.y = newSpot.y
 
             self.needToMove = False
+            
+    def collided(self):
+        self.needToMove = True
     
     def restart(self, rect):
         self.needToMove = True
@@ -151,17 +157,28 @@ class WarpWhenHit(Navigator):
 ###############  WARP WHEN HIT TIMED  ###############
 #####################################################
 class WarpWhenHitTimed(WarpWhenHit):
-    def __init__(self, locations) -> None:
-        super().__init__()
-        self.targetPositions = locations
+    def __init__(self, locations, timerLength=30) -> None:
+        super().__init__(locations)
+        self.timer = 0
+        self.runTimer = False
+        self.timerLength = timerLength
         
-    """
-    MOVE
-    Chooses a warp point from among the internal list of options
-    that is different than the position given
-    """
-    def move(self, rect):
-        return super().move()
+    def move(self, rect, randomized=True):
+        if self.runTimer:
+            self.timer += 1
+            if self.timer >= self.timerLength:
+                super().move(rect, randomized)
+                self.runTimer = False
+                self.timer = 0
+                
+    def restart(self, rect):
+        self.timer = self.timerLength
+        self.runTimer = True
+        super().restart(rect)
+                
+    def collided(self):
+        super().collided()
+        self.runTimer = True
     
     
     
@@ -190,3 +207,32 @@ class CycleWhenHit(WarpWhenHit):
         self.currentIndex = len(self.targetPositions)-1
         self.needToMove = True
         self.move(rect)
+    
+    
+    
+######################################################
+###############  CYCLE WHEN HIT TIMED  ###############
+######################################################
+class TimedCycleWhenHit(CycleWhenHit):
+    def __init__(self, locations, timerLength=30) -> None:
+        super().__init__(locations)
+        self.timer = 0
+        self.runTimer = False
+        self.timerLength = timerLength
+        
+    def move(self, rect):
+        if self.runTimer:
+            self.timer += 1
+            if self.timer >= self.timerLength:
+                super().move(rect)
+                self.runTimer = False
+                self.timer = 0
+                
+    def restart(self, rect):
+        self.timer = self.timerLength
+        self.runTimer = True
+        super().restart(rect)
+                
+    def collided(self):
+        super().collided()
+        self.runTimer = True

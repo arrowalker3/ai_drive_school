@@ -1,0 +1,13 @@
+{
+    "vehicleStart": { "x": 350, "y": 450},
+    "targetLocations": [
+        { "x": 595, "y": 415 },
+        { "x": 595, "y": 65 },
+        { "x": 65, "y": 65 },
+        { "x": 65, "y": 415 }
+    ],
+    "targetNavType": "cycle-timed",
+    "walls": [
+        {"x": 145, "y": 145, "width": 430, "height": 250}
+    ]
+}

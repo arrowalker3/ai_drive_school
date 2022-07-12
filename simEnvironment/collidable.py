@@ -140,9 +140,15 @@ class Target(Collidable):
     Initiates process of moving target to next position, returns points
     """
     def onCollision(self):
-        self.nav.needToMove = True
+        # self.nav.needToMove = True
+        score = 0
         
-        return 1
+        if not self.nav.needToMove:
+            score = 1
+            
+        self.nav.collided()
+        
+        return score
     
     def restart(self):
         self.nav.restart(self.rect)

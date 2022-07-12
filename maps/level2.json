@@ -1,13 +1,11 @@
 {
-    "vehicleStart": { "x": 350, "y": 450},
+    "vehicleStart": { "x": 360, "y": 270},
     "targetLocations": [
-        { "x": 605, "y": 425 },
-        { "x": 605, "y": 55 },
         { "x": 55, "y": 55 },
-        { "x": 55, "y": 425 }
+        { "x": 605, "y": 55 },
+        { "x": 55, "y": 425 },
+        { "x": 605, "y": 425 }
     ],
-    "targetNavType": "cycle",
-    "walls": [
-        {"x": 125, "y": 125, "width": 470, "height": 290}
-    ]
+    "targetNavType": "warp-timed",
+    "walls": []
 }

@@ -1,6 +1,6 @@
 from simEnvironment.globalResources import Point, WIDTH_BOARD, HEIGHT_BOARD
 from simEnvironment.collidable import Vehicle, Target, Wall
-from simEnvironment.navigator import Navigator, PlayerNav, Motionless, WarpWhenHit, WarpWhenHitTimed, CycleWhenHit
+from simEnvironment.navigator import Navigator, PlayerNav, Motionless, WarpWhenHit, WarpWhenHitTimed, CycleWhenHit, TimedCycleWhenHit
 import pygame
 from copy import copy
 import json
@@ -57,6 +57,10 @@ class MapManager:
         navType = mapInfoDict["targetNavType"]
         if navType == "cycle":
             navigator = CycleWhenHit(targetLocations)
+        elif navType == "cycle-timed":
+            navigator = TimedCycleWhenHit(targetLocations)
+        elif navType == "warp-timed":
+            navigator = WarpWhenHitTimed(targetLocations)
         else:       # navType = "default"
             navigator = WarpWhenHit(targetLocations)
             

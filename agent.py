@@ -8,9 +8,11 @@ from statistics import mean
 MAX_MEMORY = 500_000        # We can remember at most this many moves and their results
 BATCH_SIZE = 2000           # How many moves do we train from at a time (at max)?
 LEARNING_RATE = 0.003       # How much do we adjust our strategy based on results?
-EPSILON_CAP = 0.5
+EPSILON_CAP = 0.8
+N_RANDOM_GAMES = 500
 HIDDEN_LAYER_SIZE = 256
 OUTPUT_SIZE = 6
+TICK_ROLLOVER = 50
 
 
 
@@ -21,6 +23,7 @@ class Agent:
     def __init__(self, viewingDataLen) -> None:
         self.numberOfGames = 0
         self.last50Games = deque(maxlen=50)
+        self.epsilonTicks = 0
         self._epsilon = EPSILON_CAP        # Controls randomness
         self.gamma = 0.9          # For trainer
         self.memory = deque(maxlen=MAX_MEMORY)
@@ -125,16 +128,22 @@ class Agent:
         
         return finalMove
     
-    def adjustEpsilon(self, oldRewards, recentRewards):
-        # Get average of old rewards
-        oldAverage = mean(oldRewards) if len(oldRewards) > 0 else 0
-        # Get average of recent rewards
-        recentAverage = mean(recentRewards) if len(recentRewards) > 0 else 0
-        
-        if recentAverage > oldAverage:  # Doing well, lower epsilon
-            self.epsilon -= 0.025
-            if self.epsilon < 0:
-                self.epsilon = 0
-        else:                           # Doing worse, raise epsilon
-            self.epsilon += 0.025
-        
+    def adjustEpsilon(self, oldRewards, recentRewards, dynamic=False):
+        if dynamic:
+            # Get average of old rewards
+            oldAverage = mean(oldRewards) if len(oldRewards) > 0 else 0
+            # Get average of recent rewards
+            recentAverage = mean(recentRewards) if len(recentRewards) > 0 else 0
+            self.epsilonTicks += 1
+            
+            if self.epsilonTicks > TICK_ROLLOVER:
+                if recentAverage > oldAverage:  # Doing well, lower epsilon
+                    self.epsilon -= 0.025
+                    if self.epsilon < 0:
+                        self.epsilon = 0
+                else:                           # Doing worse, raise epsilon
+                    self.epsilon += 0.025
+                
+                self.epsilonTicks = 0
+        else:
+            self.epsilon = EPSILON_CAP - (EPSILON_CAP * (self.numberOfGames / N_RANDOM_GAMES))

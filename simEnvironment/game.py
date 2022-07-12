@@ -8,7 +8,7 @@ from simEnvironment.mapManager import MapManager
 # Choosing what goes into Viewing Data
 commands = set()
 commands.add('vehicle speed')
-commands.add('vehicle angle')
+# commands.add('vehicle angle')
 commands.add('target direction')
 commands.add('target distance')
 commands.add('forward danger distance')
@@ -85,7 +85,8 @@ class Environment:
 
             # Normalize
             if normalize:
-                speed = (speed / (self.vehicleGroup.sprite.nav.maxSpeed * 2)) + 0.5
+                speed = (speed / (self.vehicleGroup.sprite.nav.maxSpeed * 2)) + 0.5     # Scale: 0-1
+                # speed = speed / self.vehicleGroup.sprite.nav.maxSpeed     # Scale: -1 - +1
             
             # Add to data
             viewingData.append(speed)
@@ -109,8 +110,12 @@ class Environment:
 
             # Normalize
             if normalize:
+                # Scale: 0 - 1
                 targetDirection += 180
                 targetDirection /= 360
+                
+                # Scale: -1 - +1
+                # targetDirection /= 180
                 
             # Add to data
             viewingData.append(targetDirection)
@@ -301,7 +306,7 @@ class Environment:
         wallCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.wallsList, False, pygame.sprite.collide_mask)
         if len(wallCollisions) > 0:
             # self.score += target.onCollision()
-            reward = -100 * self.vehicleGroup.sprite.nav.speed
+            reward = -100 #* self.vehicleGroup.sprite.nav.speed
             gameOver = True
 
             return reward, gameOver, self.score
@@ -318,7 +323,7 @@ class Environment:
         targetCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.targetGroup, False, pygame.sprite.collide_mask)
         for target in targetCollisions:
             self.score += target.onCollision()
-            reward += 1000
+            reward += 1000 / (abs(self.vehicleGroup.sprite.nav.speed) + 1)
             self.vehicleToTarget = self.distanceToTarget()
         
         return reward, gameOver, self.score
