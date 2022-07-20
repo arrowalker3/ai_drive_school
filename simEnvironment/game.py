@@ -2,10 +2,10 @@ import pygame
 import math
 import os
 from simEnvironment.globalResources import Point, WIDTH_BOARD, HEIGHT_BOARD
-from simEnvironment.collidable import Collidable
 from simEnvironment.mapManager import MapManager
 
 # Choosing what goes into Viewing Data
+# Commenting out lines removes them from Viewing Data, and will therefore not be passed to the AI
 commands = set()
 commands.add('vehicle speed')
 # commands.add('vehicle angle')
@@ -17,17 +17,10 @@ commands.add('right danger distance')
 commands.add('left danger distance')
 # commands.add('left-forward danger distance')
 # commands.add('right-forward danger distance')
-# commands.add('position')
-# commands.add('center x y')
-
-# binary commands
-commands.add('')
 
 
 pygame.init()
 font = pygame.font.Font(os.path.join('simEnvironment', 'arial.ttf'), 16)
-# font = pygame.font.Font('arial.ttf', 25)
-# font = pygame.font.get_default_font()
 
 #############################################
 ###############  ENVIRONMENT  ###############
@@ -43,13 +36,16 @@ class Environment:
         self.playerDriven = False
         self.maxFPS = startingFPS
         
-        self.stateLabels = []
+        self.stateLabels = []       # Labels for Viewing Data to be used in Test Environment
         
         self.timer = 0
-        self.heldKeys = set()
         self.vehicleToTarget = HEIGHT_BOARD
         
         
+    """
+    SETUP ENV
+    Start up pygame environment
+    """
     def setupEnv(self):
         # init display
         self.display = pygame.display.set_mode((WIDTH_BOARD, HEIGHT_BOARD))
@@ -211,33 +207,7 @@ class Environment:
                 
             # Add to data
             viewingData.append(distance)
-            self.stateLabels.append('LF_Danger:')
-            
-        if 'position' in commands:
-            x = self.vehicleGroup.sprite.rect.left
-            y = self.vehicleGroup.sprite.rect.top
-            
-            if normalize:
-                x /= WIDTH_BOARD
-                y /= HEIGHT_BOARD
-                
-            viewingData.append(x)
-            viewingData.append(y)
-            self.stateLabels.append('X:')
-            self.stateLabels.append('Y:')
-            
-        if 'center x y' in commands:
-            x = vehicleCenter[0]
-            y = vehicleCenter[1]
-            
-            if normalize:
-                x /= WIDTH_BOARD
-                y /= HEIGHT_BOARD
-                
-            viewingData.append(x)
-            viewingData.append(y)
-            self.stateLabels.append('X_C:')
-            self.stateLabels.append('Y_C:')
+            self.stateLabels.append('RF_Danger:')
             
             
         return viewingData
@@ -311,13 +281,12 @@ class Environment:
 
             return reward, gameOver, self.score
         
+        # Determine rewards based on progress to the target
         endDistance = self.distanceToTarget()
         forwardProgress = self.vehicleToTarget - endDistance
         if forwardProgress > 0:
             reward = 5 * forwardProgress
             self.vehicleToTarget = endDistance
-        # else:
-        #     reward = forwardProgress - 1
         
         # Vehicle hit target
         targetCollisions = pygame.sprite.spritecollide(self.vehicleGroup.sprite, self.targetGroup, False, pygame.sprite.collide_mask)
@@ -334,16 +303,6 @@ class Environment:
     """
     def getPlayerAction(self):
         action = [0, 0, 0, 0, 0, 0]
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                quit()
-                
-            elif event.type == pygame.KEYDOWN:
-                self.heldKeys.add(event.key)
-                
-            elif event.type == pygame.KEYUP:
-                if event.key in self.heldKeys:
-                    self.heldKeys.remove(event.key)
                 
         # Check held keys
         heldKeys = pygame.key.get_pressed()
@@ -359,6 +318,11 @@ class Environment:
         
         return action
     
+    
+    """
+    GET OTHER USER EVENTS
+    For any user events needed to be checked in all modes
+    """
     def getOtherUserEvents(self):
         for event in pygame.event.get():
             # Need to check if the user has requested to close the window entirely
@@ -367,6 +331,10 @@ class Environment:
                 quit()
                 
     
+    """
+    DISTANCE TO TARGET
+    Linear distance from center of the vehicle to center of the target
+    """
     def distanceToTarget(self):
         vehicleX = self.vehicleGroup.sprite.rect.centerx
         vehicleY = self.vehicleGroup.sprite.rect.centery
@@ -384,17 +352,28 @@ class Environment:
         self.display.fill(pygame.Color('green'))
         self.allSpritesList.draw(self.display)
         
+        # Write score to bottom-left
+        textScore = font.render(f'Score: {self.score:,}', True, pygame.Color('black'))
+        self.display.blit(textScore, [20, HEIGHT_BOARD - 35])
+        
         if self.playerDriven:
-            viewingData = self.getState(normalize=False)
+            viewingData = self.getState(normalize=True)
             index = 0
             
+            # Print out Viewing Data to window
+            dataPerRow = 4.0
             for stat in viewingData:
                 text = font.render(f'{self.stateLabels[index]} {stat:.2f}', True, pygame.Color('black'))
-                self.display.blit(text, [150*(index%5), 20*int(index/5.0)])
+                self.display.blit(text, [175*(index%dataPerRow)+20, 20*int(index/dataPerRow)+20])
                 index += 1
         
         pygame.display.flip()
 
+    """
+    GET ANGLE FROM POINTS
+    
+    Finds the angle of the line from the vehicle to the target (right is 0 degrees, left is 180 degrees, etc)
+    """
     def getAngleFromPoints(self):
         targetPos = self.targetGroup.sprite.rect.center
         vehiclePos = self.vehicleGroup.sprite.rect.center
@@ -410,6 +389,12 @@ class Environment:
         
         return result
     
+    """
+    SHORTEST DISTANCE IN DIRECTION
+    Determines how far the closest wall is from the center of the vehicle. If angle offset is 0 degrees,
+    that means the direction chosen is whichever direction the vehicle is facing. An offset of 90 degrees
+    finds the distance to the nearest wall directly to the left of the direction the car is facing, and so on.
+    """
     def shortestDistanceInDirection(self, startingX, startingY, vehicleFacingAngle, angleOffset):
         pass
         # Find endpoint in direction (size of line doesn't matter, just larger than the screen)

@@ -1,6 +1,5 @@
 from abc import ABC, abstractmethod
 import math
-import pygame
 import random
 from simEnvironment.globalResources import Point, FORWARD, BACKWARD, LEFT, RIGHT, WIDTH_BOARD, HEIGHT_BOARD
 
@@ -21,6 +20,10 @@ class Navigator(ABC):
     def move(self, rect):
         pass
     
+    """
+    COLLIDED
+    A function to be called when a collision has occurred
+    """
     def collided(self):
         pass
     
@@ -36,7 +39,7 @@ class PlayerNav(Navigator):
         self.maxTireAngle = 45
         self.speed = 0
         self.vehicleAngle = 0
-        self.turnSpeed = 10
+        self.turnSpeed = 12
         self.acceleration = 0.75
         self.maxSpeed = 10
         self.speedChange = False
@@ -55,6 +58,10 @@ class PlayerNav(Navigator):
         
         self.applyFriction()
         
+    """
+    APPLY FRICTION
+    Slow the object down to a complete stop.
+    """
     def applyFriction(self):
         # Only apply if there hasn't been any acceleration
         if not self.speedChange:
@@ -92,6 +99,10 @@ class PlayerNav(Navigator):
             
         self.speedChange = True
         
+    """
+    RESTART
+    Reset important variables to their starting values.
+    """
     def restart(self):
         self.speed = 0
         self.vehicleAngle = 0
@@ -144,9 +155,17 @@ class WarpWhenHit(Navigator):
 
             self.needToMove = False
             
+    """
+    COLLIDED
+    Warping object is triggered to move on a collision
+    """
     def collided(self):
         self.needToMove = True
     
+    """
+    RESTART
+    Set up warping object at a random position
+    """
     def restart(self, rect):
         self.needToMove = True
         self.move(rect, False)
@@ -163,6 +182,10 @@ class WarpWhenHitTimed(WarpWhenHit):
         self.runTimer = False
         self.timerLength = timerLength
         
+    """
+    MOVE
+    If the timer is running, once time is up move the object
+    """
     def move(self, rect, randomized=True):
         if self.runTimer:
             self.timer += 1
@@ -170,12 +193,21 @@ class WarpWhenHitTimed(WarpWhenHit):
                 super().move(rect, randomized)
                 self.runTimer = False
                 self.timer = 0
+                self.timerLength = random.randint(1, 6) * 10    # Next target's timer lasts 10, 20, ..., or 60 frames
                 
+    """
+    RESTART
+    Set up so warping object is moved to random position at the start
+    """
     def restart(self, rect):
         self.timer = self.timerLength
         self.runTimer = True
         super().restart(rect)
                 
+    """
+    COLLIDED
+    Start timer on collision
+    """
     def collided(self):
         super().collided()
         self.runTimer = True
@@ -203,6 +235,10 @@ class CycleWhenHit(WarpWhenHit):
         
         self.needToMove = False
         
+    """
+    RESTART
+    Set up so object will be moved to starting position
+    """
     def restart(self, rect):
         self.currentIndex = len(self.targetPositions)-1
         self.needToMove = True
@@ -220,6 +256,10 @@ class TimedCycleWhenHit(CycleWhenHit):
         self.runTimer = False
         self.timerLength = timerLength
         
+    """
+    MOVE
+    Move only when timer has been activated and at the proper value
+    """
     def move(self, rect):
         if self.runTimer:
             self.timer += 1
@@ -227,12 +267,21 @@ class TimedCycleWhenHit(CycleWhenHit):
                 super().move(rect)
                 self.runTimer = False
                 self.timer = 0
+                self.timerLength = random.randint(1, 6) * 10    # Next target's timer lasts 10, 20, ..., or 60 frames
                 
+    """
+    RESTART
+    Move object to starting position
+    """
     def restart(self, rect):
         self.timer = self.timerLength
         self.runTimer = True
         super().restart(rect)
                 
+    """
+    COLLIDED
+    Start timer on collision
+    """
     def collided(self):
         super().collided()
         self.runTimer = True

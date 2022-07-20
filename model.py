@@ -13,7 +13,6 @@ class LinearQNet(nn.Module):
         # Driving decision layers
         self.linear1 = nn.Linear(inputSize, hiddenSize)
         self.linear2 = nn.Linear(hiddenSize, hiddenSize)
-        # self.linear2_5 = nn.Linear(hiddenSize, hiddenSize)
         self.linear3 = nn.Linear(hiddenSize, outputSize)
         
     """
@@ -25,7 +24,6 @@ class LinearQNet(nn.Module):
         # Driving prediction
         drivePrediction = F.leaky_relu(self.linear1(x))
         drivePrediction = F.leaky_relu(self.linear2(drivePrediction))
-        # drivePrediction = F.relu(self.linear2_5(drivePrediction))
         drivePrediction = self.linear3(drivePrediction)
         
         return drivePrediction
@@ -52,7 +50,7 @@ class LinearQNet(nn.Module):
     weights of Neural Network
     """
     def load(self, fileName):
-        modelFolderPath = './settings'
+        modelFolderPath = os.path.join('.', 'settings')
         
         if not os.path.exists(modelFolderPath):
             pass
@@ -61,6 +59,7 @@ class LinearQNet(nn.Module):
         
         loadedCheckpoint = torch.load(fileName)
         
+        # Load information from the save file
         self.load_state_dict(loadedCheckpoint["modelState"])
         self.eval()
         

@@ -8,11 +8,19 @@ import os
 
 from simEnvironment.navigator import PlayerNav
 
+#############################################
+###############  MAP MANAGER  ###############
+#############################################
 class MapManager:
     def __init__(self) -> None:
         self.carStart = Point(0, 0)
         self.targetStart = Point(0, 0)
         
+    """
+    CREATE BORDER
+    
+    Creates 4 walls outlining the edge of the game window.
+    """
     def createBorder(self):
         borders = []
         defaultThickness = 20
@@ -41,12 +49,17 @@ class MapManager:
         return borders
         
         
+    """
+    CREATE OBJECTS
+    
+    Given the json string of the map info, reads it to find all positions for the Vehicle, Target, and Walls
+    """
     def createObjects(self, mapInfoString):
         mapInfoDict = json.loads(mapInfoString)
         
         # Create Vehicle
         self.carStart = Point(mapInfoDict["vehicleStart"]["x"], mapInfoDict["vehicleStart"]["y"])
-        image = pygame.image.load(os.path.join('simEnvironment', 'images', 'testCar.png'))
+        image = pygame.image.load(os.path.join('simEnvironment', 'images', 'car.png'))
         vehicle = Vehicle(image)
         
         # Create Target
@@ -79,11 +92,15 @@ class MapManager:
         self.moveToStartingLocations(vehicle, target)
         
         return vehicle, target, walls
+        
+        
+    """
+    MOVE TO STARTING LOCATIONS
     
+    Calls the reset functions for the given vehicle and target
+    """
     def moveToStartingLocations(self, vehicle: pygame.sprite.Sprite, target: pygame.sprite.Sprite):
         vehicle.reset(self.carStart.x, self.carStart.y)
         
         target.restart()
-        # target.rect.x = self.targetStart.x
-        # target.rect.y = self.targetStart.y
         

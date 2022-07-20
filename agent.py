@@ -8,7 +8,7 @@ from statistics import mean
 MAX_MEMORY = 500_000        # We can remember at most this many moves and their results
 BATCH_SIZE = 2000           # How many moves do we train from at a time (at max)?
 LEARNING_RATE = 0.003       # How much do we adjust our strategy based on results?
-EPSILON_CAP = 0.8
+EPSILON_CAP = 0.5
 N_RANDOM_GAMES = 500
 HIDDEN_LAYER_SIZE = 256
 OUTPUT_SIZE = 6
@@ -30,7 +30,10 @@ class Agent:
         self.model = LinearQNet(viewingDataLen, HIDDEN_LAYER_SIZE, OUTPUT_SIZE)
         self.trainer = QTrainer(self.model, lr=LEARNING_RATE, gamma=self.gamma)
         
-    
+    """
+    EPSILON
+    Used to determine if the action taken is random (exploration) or calculated (exploitation).
+    """
     @property
     def epsilon(self):
         return self._epsilon
@@ -43,6 +46,12 @@ class Agent:
         elif self._epsilon < 0:
             self._epsilon = 0
         
+    
+    """
+    LOAD FROM FILE
+    Using the given file name, loads saved variables applicable to the Agent and returns the loaded map
+    to the function that called this one.
+    """
     def loadFromFile(self, filename="default.pth"):
         loadedCheckpoint = self.model.load(filename)
         agentData = loadedCheckpoint["agentData"]
@@ -53,6 +62,10 @@ class Agent:
         
         return loadedCheckpoint
         
+    """
+    SAVE TO FILE
+    Places important data in the given map, and passes that map to the saving function in the Model.
+    """
     def saveToFile(self, filename="default.pth", checkpointInfo={}):
         checkpointInfo["agentData"] = {
             "epoch": self.numberOfGames,
@@ -128,6 +141,16 @@ class Agent:
         
         return finalMove
     
+    """
+    ADJUST EPSILON
+    As the training progresses, this function is called to adjust the epsilon property in the Agent.
+    
+    If dynamic (default), the function finds the average rewards from the most recent x number of games, and 
+    compares it with the x number of games prior. If there is improvement, epsilon is lowered. Otherwise it's raised.
+    
+    If not dynamic, lowers epsilon slowly over time, until x number of games have passed. After that epsilon is
+    always 0.
+    """
     def adjustEpsilon(self, oldRewards, recentRewards, dynamic=False):
         if dynamic:
             # Get average of old rewards
@@ -136,7 +159,7 @@ class Agent:
             recentAverage = mean(recentRewards) if len(recentRewards) > 0 else 0
             self.epsilonTicks += 1
             
-            if self.epsilonTicks > TICK_ROLLOVER:
+            if self.epsilonTicks > TICK_ROLLOVER:       # Only adjust once every x amount of games
                 if recentAverage > oldAverage:  # Doing well, lower epsilon
                     self.epsilon -= 0.025
                     if self.epsilon < 0:

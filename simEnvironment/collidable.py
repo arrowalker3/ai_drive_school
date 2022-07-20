@@ -1,8 +1,6 @@
 # from abc import ABC, abstractmethod
 import pygame
 from simEnvironment.globalResources import Point, FORWARD, BACKWARD, LEFT, RIGHT
-from simEnvironment.hurtbox import Circle, Rect
-from simEnvironment.image import Sprite, RectShape, TargetShape
 from simEnvironment.navigator import PlayerNav, Motionless, WarpWhenHit, WarpWhenHitTimed, CycleWhenHit
 
 ############################################
@@ -116,6 +114,11 @@ class Vehicle(pygame.sprite.Sprite):
         # Rotate the mask for accurate collisions
         self.mask = pygame.mask.from_surface(self.image)
         
+        
+    """
+    RESET
+    Resets the navigator, the sprite, and the current position of the Vehicle to the given point
+    """
     def reset(self, startX, startY):
         self.nav.restart()
         self.rotateImage()
@@ -149,7 +152,12 @@ class Target(Collidable):
         self.nav.collided()
         
         return score
-    
+        
+        
+    """
+    RESTART
+    Resets the navigator of the Target
+    """
     def restart(self):
         self.nav.restart(self.rect)
     
